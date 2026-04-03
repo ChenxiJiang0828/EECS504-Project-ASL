@@ -10,6 +10,11 @@ from PIL import Image
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision import datasets, transforms
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    tqdm = None
+
 
 def set_seed(seed: int) -> None:
     random.seed(seed)
@@ -97,13 +102,25 @@ def run_epoch(
     optimizer: torch.optim.Optimizer,
     device: torch.device,
     train: bool,
+    epoch: int,
+    total_epochs: int,
 ) -> Tuple[float, float]:
     model.train(mode=train)
     total_loss = 0.0
     total_acc = 0.0
     num_batches = 0
 
-    for images, labels in loader:
+    phase = "train" if train else "val"
+    if tqdm is not None:
+        iterator = tqdm(
+            loader,
+            desc=f"Epoch {epoch:02d}/{total_epochs} [{phase}]",
+            leave=False,
+        )
+    else:
+        iterator = loader
+
+    for images, labels in iterator:
         images = images.to(device)
         labels = labels.to(device)
 
@@ -122,6 +139,8 @@ def run_epoch(
         total_loss += loss.item()
         total_acc += acc
         num_batches += 1
+        if tqdm is not None:
+            iterator.set_postfix(loss=f"{total_loss / num_batches:.4f}", acc=f"{total_acc / num_batches:.4f}")
 
     return total_loss / num_batches, total_acc / num_batches
 
@@ -130,8 +149,12 @@ def evaluate_test(model: nn.Module, loader: DataLoader, device: torch.device) ->
     model.eval()
     correct = 0
     total = 0
+    if tqdm is not None:
+        iterator = tqdm(loader, desc="Testing", leave=False)
+    else:
+        iterator = loader
     with torch.no_grad():
-        for images, labels in loader:
+        for images, labels in iterator:
             images = images.to(device)
             labels = labels.to(device)
             preds = torch.argmax(model(images), dim=1)
@@ -234,10 +257,30 @@ def main():
     print(f"Device: {device}")
     print(f"Classes ({num_classes}): {classes}")
     print(f"Train size: {len(train_dataset)} | Val size: {len(val_dataset)} | Test size: {len(test_dataset)}")
+    if tqdm is None:
+        print("Tip: install tqdm for progress bars: pip install tqdm")
 
     for epoch in range(1, args.epochs + 1):
-        train_loss, train_acc = run_epoch(model, train_loader, criterion, optimizer, device, train=True)
-        val_loss, val_acc = run_epoch(model, val_loader, criterion, optimizer, device, train=False)
+        train_loss, train_acc = run_epoch(
+            model,
+            train_loader,
+            criterion,
+            optimizer,
+            device,
+            train=True,
+            epoch=epoch,
+            total_epochs=args.epochs,
+        )
+        val_loss, val_acc = run_epoch(
+            model,
+            val_loader,
+            criterion,
+            optimizer,
+            device,
+            train=False,
+            epoch=epoch,
+            total_epochs=args.epochs,
+        )
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc
