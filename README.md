@@ -1,35 +1,35 @@
 # EECS504 Project - ASL (Sign Language MNIST)
 
-本项目基于 `model.ipynb`，使用 TensorFlow/Keras 对 Sign Language MNIST 数据集进行字母手势分类，并对多种模型进行对比与调参。
+This project is based on `model.ipynb` and uses TensorFlow/Keras to classify ASL letters on the Sign Language MNIST dataset, with multi-model comparison and hyperparameter tuning.
 
 ![Sign Language Sample](american_sign_1.png)
 
-## 项目内容
+## Project Contents
 
-- 数据：`data/sign_mnist_train.csv`、`data/sign_mnist_test.csv`
-- 主实验：`model.ipynb`
-- 训练后模型：`sign_language_resnet_small.keras`
-- 可视化示例：`model_summary.png`、`prediction_output.png`
+- Data: `data/sign_mnist_train.csv`, `data/sign_mnist_test.csv`
+- Main experiment notebook: `model.ipynb`
+- Trained model artifact: `sign_language_resnet_small.keras`
+- Visualization examples: `model_summary.png`, `prediction_output.png`
 
-## 环境依赖
+## Environment Setup
 
-推荐 Python 3.9+，安装：
+Recommended: Python 3.9+
 
 ```bash
 pip install tensorflow pandas numpy matplotlib seaborn scikit-learn opencv-python
 ```
 
-## 训练配置（来自最新 `model.ipynb`）
+## Training Configuration (from latest `model.ipynb`)
 
-- 输入尺寸：`28 x 28 x 1`
-- Epochs：`8`
-- Batch Size：`128`
-- Learning Rate：`1e-3`
-- 优化器：`Adam`
-- 损失函数：`sparse_categorical_crossentropy`
-- 早停：`EarlyStopping(monitor='val_accuracy', patience=2, restore_best_weights=True)`
+- Input shape: `28 x 28 x 1`
+- Epochs: `8`
+- Batch size: `128`
+- Learning rate: `1e-3`
+- Optimizer: `Adam`
+- Loss: `sparse_categorical_crossentropy`
+- Early stopping: `EarlyStopping(monitor='val_accuracy', patience=2, restore_best_weights=True)`
 
-## 模型对比结果（`results_df`）
+## Model Comparison Results (`results_df`)
 
 | model | train_acc | val_acc | val_loss | params |
 |---|---:|---:|---:|---:|
@@ -38,15 +38,15 @@ pip install tensorflow pandas numpy matplotlib seaborn scikit-learn opencv-pytho
 | vgg_tiny | 0.9808 | 0.9678 | 0.0703 | 142,073 |
 | basic_cnn | 0.9887 | 0.9426 | 0.2010 | 243,481 |
 
-结论：最新 notebook 中选择 `resnet_small` 作为最佳模型并保存为：
+Conclusion: the latest notebook selects `resnet_small` as the primary model and saves it as:
 
 ```text
 sign_language_resnet_small.keras
 ```
 
-## ResNet 调参结果（`resnet_tune_df`）
+## ResNet Tuning Results (`resnet_tune_df`)
 
-调参维度：`learning rate`、`batch size`、`dropout`。
+Tuned parameters: `learning rate`, `batch size`, and `dropout`.
 
 | setting | lr | batch_size | dropout | val_acc | best_val_acc |
 |---|---:|---:|---:|---:|---:|
@@ -56,23 +56,23 @@ sign_language_resnet_small.keras
 | low_lr_small_batch | 3e-4 | 64 | 0.45 | 0.9968 | 0.9968 |
 | low_lr | 3e-4 | 128 | 0.30 | 0.9877 | 0.9902 |
 
-## 测试结论（Notebook 最后一部分）
+## Testing Summary (final notebook section)
 
-- 在 validation set 上绘制了 confusion matrix。
-- 在 `data/photo` 的真实图片小样本（10 张）上测试，记录结果：
+- A confusion matrix is generated on the validation set.
+- Real-image evaluation on a small sample in `data/photo` (10 images) reports:
   - `Dataset: 10 | Accuracy: 80.00%`
 
-这说明模型在 Sign Language MNIST 分布内表现很强，但在真实图片域上仍存在泛化差距。
+This indicates very strong in-distribution performance on Sign Language MNIST, while domain gap remains on real-world photos.
 
-## 运行方式
+## How To Run
 
-1. 打开 `model.ipynb`。
-2. 按顺序运行：数据读取 -> 模型对比训练 -> 保存最佳模型 -> 混淆矩阵 -> 真实图像测试。
-3. 若只做推理，请确保 `sign_language_resnet_small.keras` 存在。
+1. Open `model.ipynb`.
+2. Run cells in order: data loading -> model comparison training -> best model saving -> confusion matrix -> real-image testing.
+3. For inference-only usage, ensure `sign_language_resnet_small.keras` exists.
 
-## 当前目录（已轻量整理）
+## Repository Cleanup Notes
 
-- 已清理：`.idea/`、`.ipynb_checkpoints/`
-- 新增：`.gitignore`（忽略 IDE 文件、notebook checkpoint、本地数据与新训练产物）
+- Removed: `.idea/`, `.ipynb_checkpoints/`
+- Added: `.gitignore` (IDE files, notebook checkpoints, local data, and newly generated training artifacts)
 
 ![Prediction Example](prediction_output.png)
