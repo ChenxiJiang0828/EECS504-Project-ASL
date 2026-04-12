@@ -1,60 +1,78 @@
-<<<<<<< HEAD
-# Sign Language MNIST
+# EECS504 Project - ASL (Sign Language MNIST)
 
-![Sign_Language_MNIST](american_sign_1.png)
+本项目基于 `model.ipynb`，使用 TensorFlow/Keras 对 Sign Language MNIST 数据集进行字母手势分类，并对多种模型进行对比与调参。
 
-The dataset format is patterned to match closely with the classic MNIST. Each training and test case represents a label (0-25) as a one-to-one map for each alphabetic letter A-Z (and no cases for 9=J or 25=Z because of gesture motions). The training data (27,455 cases) and test data (7172 cases) (used as validation data in this project) are approximately half the size of the standard MNIST but otherwise similar with a header row of label, pixel1,pixel2....pixel784 which represent a single 28x28 pixel image with grayscale values between 0-255. The original hand gesture image data represented multiple users repeating the gesture against different backgrounds. The Sign Language MNIST data came from greatly extending the small number (1704) of the color images included as not cropped around the hand region of interest. To create new data, an image pipeline was used based on ImageMagick and included cropping to hands-only, gray-scaling, resizing, and then creating at least 50+ variations to enlarge the quantity. The modification and expansion strategy was filters ('Mitchell', 'Robidoux', 'Catrom', 'Spline', 'Hermite'), along with 5% random pixelation, +/- 15% brightness/contrast, and finally 3 degrees rotation. Because of the tiny size of the images, these modifications effectively alter the resolution and class separation in interesting, controllable ways.
+![Sign Language Sample](american_sign_1.png)
 
-This is what the gray-scaled output looks like:
+## 项目内容
 
-![Grayscale_Output](american_sign_2.png)
+- 数据：`data/sign_mnist_train.csv`、`data/sign_mnist_test.csv`
+- 主实验：`model.ipynb`
+- 训练后模型：`sign_language_resnet_small.keras`
+- 可视化示例：`model_summary.png`、`prediction_output.png`
 
-Although the model achieves a high accuracy on the training and the validation data-set, it is extremely inaccurate in its practicality, because of it being trained only on a certain skin-tone. However, this notebook is to demonstrate how a CNN can be built in order to work on the Sign Language MNIST dataset.
+## 环境依赖
 
-## Model Summary
-
-The model is a convolutional neural network, the summary can be given as follows:
-
-![Model_Summary](model_summary.png)
-
-## Output
-
-The model achieves a training accuracy of ```~99``` and a validation accuracy of ```~93```. It performs extremely well on the given data in the testing dataset but has an extremely low accuracy on random images.
-
-![Model_Output](prediction_output.png)
-
-=======
-# EECS504-Project-ASL
-
-## CNN Baseline
-
-This repo now includes a simple PyTorch CNN baseline for ASL alphabet image classification.
-
-### 1. Install dependencies
+推荐 Python 3.9+，安装：
 
 ```bash
-pip install torch torchvision pillow
+pip install tensorflow pandas numpy matplotlib seaborn scikit-learn opencv-python
 ```
 
-### 2. Dataset structure (already in this repo)
+## 训练配置（来自最新 `model.ipynb`）
 
-- `asl_alphabet_train/asl_alphabet_train/<class_name>/*.jpg`
-- `asl_alphabet_test/asl_alphabet_test/*_test.jpg`
+- 输入尺寸：`28 x 28 x 1`
+- Epochs：`8`
+- Batch Size：`128`
+- Learning Rate：`1e-3`
+- 优化器：`Adam`
+- 损失函数：`sparse_categorical_crossentropy`
+- 早停：`EarlyStopping(monitor='val_accuracy', patience=2, restore_best_weights=True)`
 
-### 3. Train and evaluate
+## 模型对比结果（`results_df`）
 
-```bash
-python cnn_baseline.py
+| model | train_acc | val_acc | val_loss | params |
+|---|---:|---:|---:|---:|
+| resnet_small | 1.0000 | 0.9972 | 0.0137 | 681,529 |
+| mobilenet_small | 0.9648 | 0.9794 | 0.0762 | 2,290,009 |
+| vgg_tiny | 0.9808 | 0.9678 | 0.0703 | 142,073 |
+| basic_cnn | 0.9887 | 0.9426 | 0.2010 | 243,481 |
+
+结论：最新 notebook 中选择 `resnet_small` 作为最佳模型并保存为：
+
+```text
+sign_language_resnet_small.keras
 ```
 
-Optional example with custom settings:
+## ResNet 调参结果（`resnet_tune_df`）
 
-```bash
-python cnn_baseline.py --epochs 12 --batch-size 64 --image-size 64 --lr 0.001
-```
+调参维度：`learning rate`、`batch size`、`dropout`。
 
-### 4. Outputs
+| setting | lr | batch_size | dropout | val_acc | best_val_acc |
+|---|---:|---:|---:|---:|---:|
+| small_batch | 1e-3 | 64 | 0.30 | 0.9985 | 1.0000 |
+| base | 1e-3 | 128 | 0.30 | 0.9992 | 0.9992 |
+| strong_dropout | 1e-3 | 128 | 0.45 | 0.9974 | 0.9974 |
+| low_lr_small_batch | 3e-4 | 64 | 0.45 | 0.9968 | 0.9968 |
+| low_lr | 3e-4 | 128 | 0.30 | 0.9877 | 0.9902 |
 
-- Best checkpoint: `checkpoints/cnn_baseline_best.pt`
-- Console logs: train/val loss+accuracy each epoch, plus final test accuracy
->>>>>>> b15e63eb02ca6faa201e8fd511fe46df39f10cc1
+## 测试结论（Notebook 最后一部分）
+
+- 在 validation set 上绘制了 confusion matrix。
+- 在 `data/photo` 的真实图片小样本（10 张）上测试，记录结果：
+  - `Dataset: 10 | Accuracy: 80.00%`
+
+这说明模型在 Sign Language MNIST 分布内表现很强，但在真实图片域上仍存在泛化差距。
+
+## 运行方式
+
+1. 打开 `model.ipynb`。
+2. 按顺序运行：数据读取 -> 模型对比训练 -> 保存最佳模型 -> 混淆矩阵 -> 真实图像测试。
+3. 若只做推理，请确保 `sign_language_resnet_small.keras` 存在。
+
+## 当前目录（已轻量整理）
+
+- 已清理：`.idea/`、`.ipynb_checkpoints/`
+- 新增：`.gitignore`（忽略 IDE 文件、notebook checkpoint、本地数据与新训练产物）
+
+![Prediction Example](prediction_output.png)
