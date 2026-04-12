@@ -70,9 +70,5 @@ This indicates very strong in-distribution performance on Sign Language MNIST, w
 2. Run cells in order: data loading -> model comparison training -> best model saving -> confusion matrix -> real-image testing.
 3. For inference-only usage, ensure `sign_language_resnet_small.keras` exists.
 
-## Repository Cleanup Notes
-
-- Removed: `.idea/`, `.ipynb_checkpoints/`
-- Added: `.gitignore` (IDE files, notebook checkpoints, local data, and newly generated training artifacts)
-
 ![Prediction Example](prediction_output.png)
+
